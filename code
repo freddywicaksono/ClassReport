@@ -1,0 +1,115 @@
+Imports MySql.Data.MySqlClient
+Imports Microsoft.Reporting.WinForms
+Public Class Report
+    Private _dataconnection As New MySql.Data.MySqlClient.MySqlConnection
+    Private _hostname As String = "localhost"
+    Private _dbname As String
+    Private _dbuser As String
+    Private _dbpwd As String
+
+    Private _reportfilename As String
+    Private _reportpath As String
+    Private _datasetname As String
+    Private _datatablename As String
+    Private _sqlquery As String
+
+    Private da As New MySql.Data.MySqlClient.MySqlDataAdapter
+    Public Property HostName()
+        Get
+            Return _hostname
+        End Get
+        Set(ByVal value)
+            _hostname = value
+        End Set
+    End Property
+
+    Public Property DatabaseName()
+        Get
+            Return _dbname
+        End Get
+        Set(ByVal value)
+            _dbname = value
+        End Set
+    End Property
+    Public Property DatabaseUsername()
+        Get
+            Return _dbuser
+        End Get
+        Set(ByVal value)
+            _dbuser = value
+        End Set
+    End Property
+    Public Property DatabasePassword()
+        Get
+            Return _dbpwd
+        End Get
+        Set(ByVal value)
+            _dbpwd = value
+        End Set
+    End Property
+
+    Public Property DataSetName()
+        Get
+            Return _datasetname
+        End Get
+        Set(ByVal value)
+            _datasetname = value
+        End Set
+    End Property
+
+    Public Property DataTableName()
+        Get
+            Return _datatablename
+        End Get
+        Set(ByVal value)
+            _datatablename = value
+        End Set
+    End Property
+
+    Public Property ReportFilename()
+        Get
+            Return _reportfilename
+        End Get
+        Set(ByVal value)
+            _reportfilename = value
+        End Set
+    End Property
+
+    Public Property SqlQuery()
+        Get
+            Return _sqlquery
+        End Get
+        Set(ByVal value)
+            _sqlquery = value
+        End Set
+    End Property
+
+    Public Sub LoadReport(rv As Microsoft.Reporting.WinForms.ReportViewer, ds As DataSet)
+        Dim Rpds As Microsoft.Reporting.WinForms.ReportDataSource
+
+        rv.RefreshReport()
+        _reportpath = Application.StartupPath & "/" & _reportfilename
+        Try
+            With rv.LocalReport
+                .ReportPath = _reportpath
+                .DataSources.Clear()
+            End With
+
+            _dataconnection.ConnectionString = "server=" & _hostname & ";user id=" & _dbuser & ";password=" & _dbpwd & ";database=" & _dbname & ";"
+            _dataconnection.Open()
+            da.SelectCommand = New MySql.Data.MySqlClient.MySqlCommand(_sqlquery, _dataconnection)
+            da.Fill(ds.Tables(_datatablename))
+            _dataconnection.Close()
+            Rpds = New Microsoft.Reporting.WinForms.ReportDataSource(_datasetname, ds.Tables(_datatablename))
+            rv.LocalReport.DataSources.Add(Rpds)
+            rv.SetDisplayMode(Microsoft.Reporting.WinForms.DisplayMode.PrintLayout)
+            rv.ZoomMode = Microsoft.Reporting.WinForms.ZoomMode.Percent
+            rv.ZoomPercent = 100
+
+        Catch ex As Exception
+            _dataconnection.Close()
+            MessageBox.Show(ex.Message)
+
+        End Try
+    End Sub
+End Class
